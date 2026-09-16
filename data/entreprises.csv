@@ -1,0 +1,13 @@
+nom;secteur;localisation;effectif;signal_croissance;site_web;paiement_en_ligne;score_attendu
+Banque du Golfe Togo;Banque;Lomé;150;Ouverture d'agence;1;1;100
+Togo Logistique SA;Logistique;Lomé;45;Recrutement informatique;1;0;90
+KBE Digital;Informatique;Lomé;25;Levée de fonds;1;1;90
+Clinique de la Paix;Santé;Kara;12;Nouveau site web;1;0;85
+Assurances Horizon Togo;Assurance;Lomé;80;Expansion régionale;1;1;100
+Télécom Services Togo;Informatique;Lomé;60;Nouveau contrat;1;0;95
+École Internationale du Golfe;Éducation;Lomé;30;Recrutement enseignants;1;1;90
+Boutique Adidogomé;Commerce;Lomé;5;Aucun;0;0;40
+Boulangerie de la Paix;Agroalimentaire;Tsevié;8;Aucun;0;0;15
+Cabinet Conseil Kara;Conseil;Kara;15;Nouveau bureau;0;0;65
+PME Agricole Sud;Agroalimentaire;Autres;100;Aucun;0;0;35
+Startup Fintech Lomé;Informatique;Lomé;8;Levée de fonds;1;1;75

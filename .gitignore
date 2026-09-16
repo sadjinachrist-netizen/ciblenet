@@ -1,0 +1,5 @@
+yas_prospects.db
+.env
+__pycache__/
+.venv/
+.streamlit/secrets.toml
