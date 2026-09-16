@@ -7,6 +7,7 @@ import streamlit as st
 
 import database as db
 import llm
+import lss
 import webhook
 from scoring import SECTEURS, VILLES, TRANCHES, LABELS, score_prospect, offre_recommandee
 
@@ -33,6 +34,11 @@ with st.sidebar:
         db.init_db(reset=True)
         st.session_state.clear()
         st.rerun()
+    if lss.disponible() and st.button("📂 Charger les données LSS 2026", use_container_width=True, help="Jeu officiel des organisateurs : 150 prospects, 250 interactions"):
+        con = db.connexion(); r = lss.importer(con); con.close()
+        db.scorer_tous()
+        st.session_state.clear()
+        st.success(f"{r['prospects']} prospects et {r['interactions']} interactions chargés ({r['doublons_ignores']} doublons ignorés)")
     fichier = st.file_uploader("📥 Importer des entreprises (CSV)", type=["csv"], help="Colonnes : nom;secteur;localisation;effectif;signal_croissance")
     if fichier is not None:
         chemin = os.path.join(tempfile.gettempdir(), fichier.name)

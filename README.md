@@ -37,6 +37,14 @@ yas-prospect-copilot/
 └── README.md
 ```
 
+## Données officielles LSS 2026
+
+Le bouton **« Charger les données LSS 2026 »** (barre latérale) remplace le dataset de démo par le jeu fourni par les organisateurs
+(`data/lss/`, fichier `01_Prospection` : 150 prospects après dédoublonnage, 250 interactions). Mapping vers le vocabulaire Yas :
+Finance → Banque, Technologie → Informatique, Distribution → Commerce, Services → Conseil ; Agoè-Nyivé → Lomé (Grand Lomé),
+Kpalimé / Atakpamé → Autres ; En discussion → Contacté, À relancer → Relancé, Refusé → Non intéressé. Le « besoin potentiel »
+du fichier est utilisé comme signal d'intention (le fichier n'a pas de signal de croissance). Les interactions alimentent l'historique.
+
 ## Scoring (100 points, chaque point expliqué)
 
 | Critère | Max | Barème |
