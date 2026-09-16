@@ -8,6 +8,7 @@ import streamlit as st
 import database as db
 import llm
 import lss
+import ui
 import webhook
 from scoring import SECTEURS, VILLES, TRANCHES, LABELS, score_prospect, offre_recommandee
 
@@ -22,6 +23,7 @@ except Exception:
     pass  # pas de fichier secrets en local : on utilise .env / les variables système
 
 db.init_db()
+ui.injecter_css()
 
 # ---------- barre latérale ----------
 with st.sidebar:
@@ -62,20 +64,32 @@ def fiche(e: dict):
     score, reasons, status = score_prospect(e)
     c1, c2 = st.columns([1, 2])
     with c1:
-        st.metric("Score ICP", f"{score}/100")
+        st.markdown(f"<div style='font-size:13px;color:#64748b'>SCORE ICP</div><div style='font-size:40px;font-weight:800;line-height:1'>{score}<span style='font-size:18px;color:#94a3b8'>/100</span></div>", unsafe_allow_html=True)
         st.markdown(LABELS[status])
-        st.markdown(f"**Offre recommandée :** {offre_recommandee(e)}")
-        st.markdown(f"**Statut :** {badge(e['statut'])}")
+        st.markdown(f"<div class='offre'>🎯 {offre_recommandee(e)}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='margin-top:8px'>Statut : <b>{badge(e['statut'])}</b></div>", unsafe_allow_html=True)
     with c2:
-        st.markdown("**Détail du score (chaque point est expliqué)**")
-        for r in reasons:
-            st.markdown(f"- `{r.split(' ', 1)[0]}` {r.split(' ', 1)[1]}")
+        st.markdown("**Détail du score — chaque point est expliqué**")
+        st.markdown("".join(ui.raison(r) for r in reasons), unsafe_allow_html=True)
     hist = db.actions(e["id"])
     if hist:
         with st.expander(f"Historique ({len(hist)} action(s))"):
             for a in hist:
                 st.markdown(f"**{a['date'][:16].replace('T', ' ')}** — {a['type']}" + (f" : {a['detail'][:120]}…" if a["detail"] and len(a["detail"]) > 120 else f" : {a['detail']}" if a["detail"] else ""))
 
+
+ui.entete()
+_c = db.compteurs()
+_rows = db.lister()
+_clos = _c["Converti"] + _c["Non intéressé"]
+ui.kpis([
+    (sum(_c.values()), "Prospects identifiés", "#3b82f6"),
+    (sum(1 for r in _rows if (r["score"] or 0) >= 75), "Haute priorité (≥ 75)", "#f59e0b"),
+    (sum(1 for r in _rows if db.relance_due(r)), "Relances dues", "#8b5cf6"),
+    (_c["Converti"], "Convertis", "#16a34a"),
+    (f"{round(100 * _c['Converti'] / _clos) if _clos else 0} %", "Taux de conversion", ui.ROUGE),
+])
+st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
 
 tab1, tab2, tab3, tab4 = st.tabs(["🔎 Recherche & Scoring", "🗂️ Pipeline", "🤝 Handoff", "📊 Tableau de bord"])
 
@@ -116,10 +130,7 @@ with tab2:
     colonnes = st.columns(len(db.STATUTS))
     for col, statut in zip(colonnes, db.STATUTS):
         items = db.lister(statut=statut)
-        col.markdown(f"**{badge(statut)}** ({len(items)})")
-        for e in items:
-            due = db.relance_due(e)
-            col.markdown(f"{'🔔 ' if due else ''}{e['nom']}  \n<small>{e['score'] if e['score'] is not None else '?'}/100 · {e['secteur']}</small>", unsafe_allow_html=True)
+        col.markdown(ui.tete_colonne(statut, len(items)) + "".join(ui.carte_pipeline(e, db.relance_due(e)) for e in items), unsafe_allow_html=True)
 
     st.divider()
     rows = db.lister()
@@ -195,11 +206,9 @@ with tab4:
     c = db.compteurs()
     total = sum(c.values())
     clos = c["Converti"] + c["Non intéressé"]
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Prospects", total)
-    m2.metric("Convertis", c["Converti"])
-    m3.metric("Taux de conversion", f"{round(100 * c['Converti'] / clos) if clos else 0} %")
-    m4.metric("Temps de prospection", "15 min", "-3 h 45 vs manuel", delta_color="inverse")
+    m1, m2 = st.columns(2)
+    m1.metric("Temps de prospection manuel", f"{total * 20 // 60} h {total * 20 % 60:02d}", "20 min par entreprise")
+    m2.metric("Avec le copilote", f"{total} min", f"-{round(100 - 100 * total / (total * 20))} % de temps", delta_color="normal")
     st.bar_chart(pd.DataFrame({"statut": list(c.keys()), "prospects": list(c.values())}).set_index("statut"))
     st.markdown(f"""
 **Comment on calcule 4 h → 15 min** : pour {total} entreprises, la recherche manuelle (annuaire, site web, LinkedIn) prend environ
