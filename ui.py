@@ -19,6 +19,13 @@ section[data-testid="stSidebar"] * {{ color: #e2e8f0; }}
 section[data-testid="stSidebar"] .stButton button, section[data-testid="stSidebar"] .stDownloadButton button {{
   background: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 10px; }}
 section[data-testid="stSidebar"] .stButton button:hover {{ border-color: {ROUGE}; color: #fff; }}
+/* zone d'import CSV : même style sombre que les boutons, texte lisible */
+section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] {{
+  background: #1e293b; border: 1px dashed #475569; border-radius: 10px; }}
+section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] * {{ color: #cbd5e1 !important; }}
+section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] button {{
+  background: #334155 !important; border: 1px solid #475569 !important; color: #fff !important; border-radius: 8px; }}
+section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] svg {{ fill: #cbd5e1; }}
 .stTabs [data-baseweb="tab-list"] {{ gap: 6px; }}
 .stTabs [data-baseweb="tab"] {{ padding: 10px 18px; border-radius: 10px 10px 0 0; font-weight: 600; }}
 .stTabs [aria-selected="true"] {{ background: #fff1f2; color: {ROUGE}; }}
