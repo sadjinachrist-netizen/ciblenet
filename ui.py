@@ -1,7 +1,9 @@
-# ui.py — Habillage visuel de Yas Prospect Copilot (CSS + composants HTML réutilisables)
+# ui.py — Habillage visuel de CibleNet (CSS + composants HTML réutilisables)
 import streamlit as st
 
-ROUGE = "#e30613"      # rouge Yas
+import config
+
+ROUGE = "#0f766e"      # couleur principale (teal) — renommage conservé pour compatibilité
 NUIT = "#0f172a"
 COULEURS_STATUT = {
     "Nouveau": "#94a3b8", "Scoré": "#3b82f6", "Contacté": "#8b5cf6", "Relancé": "#f59e0b",
@@ -28,16 +30,16 @@ section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] button {
 section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] svg {{ fill: #cbd5e1; }}
 .stTabs [data-baseweb="tab-list"] {{ gap: 6px; }}
 .stTabs [data-baseweb="tab"] {{ padding: 10px 18px; border-radius: 10px 10px 0 0; font-weight: 600; }}
-.stTabs [aria-selected="true"] {{ background: #fff1f2; color: {ROUGE}; }}
+.stTabs [aria-selected="true"] {{ background: #f0fdfa; color: {ROUGE}; }}
 .stButton button[kind="primary"] {{ background: {ROUGE}; border-color: {ROUGE}; border-radius: 10px; font-weight: 600; }}
 .stButton button {{ border-radius: 10px; }}
 [data-testid="stMetric"] {{ background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 14px 18px; }}
 
 /* ---- en-tête ---- */
-.yas-hero {{ background: linear-gradient(120deg, {NUIT} 0%, #7f1d1d 60%, {ROUGE} 100%); color: #fff; border-radius: 18px;
+.yas-hero {{ background: linear-gradient(120deg, {NUIT} 0%, #134e4a 60%, {ROUGE} 100%); color: #fff; border-radius: 18px;
   padding: 26px 30px; margin-bottom: 18px; box-shadow: 0 10px 30px rgba(15,23,42,.18); }}
 .yas-hero h1 {{ color: #fff; margin: 0 0 4px; font-size: 30px; }}
-.yas-hero p {{ margin: 0 0 12px; color: #fecaca; font-size: 15px; }}
+.yas-hero p {{ margin: 0 0 12px; color: #99f6e4; font-size: 15px; }}
 .yas-chip {{ display: inline-block; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.3); border-radius: 999px;
   padding: 4px 12px; margin: 2px 6px 2px 0; font-size: 12.5px; font-weight: 600; }}
 
@@ -59,7 +61,7 @@ section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] svg {{ f
 .score-h {{ background: #dcfce7; color: #166534; }} .score-m {{ background: #fef9c3; color: #854d0e; }} .score-b {{ background: #fee2e2; color: #991b1b; }}
 .raison {{ background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 10px; padding: 8px 12px; margin-bottom: 6px; font-size: 14px; }}
 .raison b {{ color: {ROUGE}; margin-right: 8px; font-family: ui-monospace, monospace; }}
-.offre {{ background: #fff1f2; border: 1px solid #fecdd3; color: #9f1239; border-radius: 10px; padding: 8px 12px; font-size: 13.5px; font-weight: 600; }}
+.offre {{ background: #f0fdfa; border: 1px solid #99f6e4; color: #115e59; border-radius: 10px; padding: 8px 12px; font-size: 13.5px; font-weight: 600; }}
 </style>
 """
 
@@ -69,12 +71,13 @@ def injecter_css():
 
 
 def entete():
+    p = config.profil()
+    chips = "".join(f'<span class="yas-chip">{o}</span>' for o in p["offres"])
     st.markdown(f"""
 <div class="yas-hero">
-  <h1>🎯 Yas Prospect Copilot</h1>
-  <p>Identifier · Qualifier · Prospecter · Relancer · Convertir — le copilote commercial de Yas Business</p>
-  <span class="yas-chip">📶 Fibre Pro</span><span class="yas-chip">📱 Flotte mobile</span>
-  <span class="yas-chip">💳 Mixx Business</span><span class="yas-chip">✉️ API SMS</span>
+  <h1>🎯 {config.APP_NOM} <span style="font-size:16px;font-weight:500;opacity:.85">· {p["entreprise"]}</span></h1>
+  <p>{config.APP_SLOGAN}</p>
+  {chips}
 </div>""", unsafe_allow_html=True)
 
 

@@ -1,4 +1,4 @@
-# Script de démo — Yas Prospect Copilot (5 minutes)
+# Script de démo — CibleNet (5 minutes)
 
 ## Avant de monter sur scène (checklist)
 - [ ] `start.bat` lancé, l'appli s'ouvre sur http://localhost:8501 sans erreur
@@ -9,9 +9,9 @@
 - [ ] Recherche testée une fois : Logistique + Lomé + 10-49 → Togo Logistique SA
 
 ## Ouverture (30 s)
-« Un commercial Yas Business perd 4 heures par jour à chercher des prospects à la main, dans des fichiers dispersés,
-sans savoir lesquels valent vraiment un appel. Voici notre copilote : construit en 4 jours, zéro budget,
-et chaque décision de l'IA est expliquée par une raison métier. »
+« Le commercial d'une PME perd 4 heures par jour à chercher des prospects à la main, dans des fichiers dispersés,
+sans savoir lesquels valent vraiment un appel. Voici CibleNet : un copilote que chaque PME configure avec son profil,
+construit en 4 jours, zéro budget, et chaque décision de l'IA est expliquée par une raison métier. »
 
 ## Étape 1 — Identifier (1 min) — onglet Recherche & Scoring
 1. Secteur **Logistique**, localisation **Lomé**, taille **10-49** → **Rechercher**.
@@ -24,15 +24,15 @@ et chaque décision de l'IA est expliquée par une raison métier. »
 2. Lire les 4 raisons :
    - +25 Secteur prioritaire (Logistique)
    - +20 Taille correcte (45 salariés)
-   - +20 Lomé, couverture Fibre optimale
+   - +20 Zone prioritaire (Lomé)
    - +25 Signal d'expansion : Recrutement informatique
 3. « Chaque point est explicable. Un commercial peut contester ou ajuster. »
 4. Choisir **Boulangerie de la Paix — 15/100** : « Disqualifié : secteur hors cible, 8 salariés, Tsevié, aucun signal. Le scoring discrimine vraiment. »
-5. Montrer l'**offre recommandée** (Flotte mobile pour Togo Logistique).
+5. Montrer l'**offre recommandée** et, dans l'onglet Paramètres, expliquer que la grille et les offres sont celles de la PME (profil par défaut : l'entreprise témoin LSS 2026).
 
 ## Étape 3 — Prospecter (1 min) — onglet Pipeline
 1. Sélectionner **Togo Logistique SA** → **✉️ Générer message** (< 2 s).
-2. Lire l'email à voix haute : il cite « Recrutement informatique » et l'offre Flotte mobile, < 100 mots, propose un rendez-vous.
+2. Lire l'email à voix haute : il cite « Recrutement informatique » et une offre de l'entreprise, < 100 mots, propose un rendez-vous.
 3. **📤 Marquer contacté** : la carte passe dans la colonne Contacté avec la date du jour.
 
 ## Étape 4 — Relancer & Convertir (1 min)
@@ -40,7 +40,7 @@ et chaque décision de l'IA est expliquée par une raison métier. »
 2. **🔁 Relancer** : relance courte, ton différent, la carte passe en Relancé.
 3. **✅ Converti**.
 4. Onglet **Handoff** → **🤝 Transmettre** : la notification apparaît **en direct sur Discord**
-   (« Transmis au responsable commercial Yas Business », secteur, effectif, score, message).
+   (« Transmis au responsable commercial de … », secteur, effectif, score, message).
    Si Discord ne répond pas : la même notification s'affiche dans l'appli.
 
 ## Clôture (30 s) — onglet Tableau de bord
@@ -52,6 +52,7 @@ temps réel réservée aux scores > 75. Merci. »
 - **D'où viennent les entreprises ?** Dataset de démonstration (noms fictifs). En production : import du fichier CFE / CCI,
   ou recherche OpenStreetMap par secteur et ville.
 - **Pourquoi Discord ?** C'est un webhook : le même code alimente Slack, Teams ou un email.
+- **Et pour une autre PME ?** Onglet Paramètres : nom, offres, secteurs et zones prioritaires — les prospects sont rescorés en un clic.
 - **Et si Groq tombe ?** Deux clés avec bascule automatique, puis templates locaux : la démo ne bloque jamais.
 - **Le signal de croissance, vous le trouvez comment ?** Saisi par le business developer ou détecté sur le site / LinkedIn ;
   c'est le critère le plus fort du score, donc il doit être vérifié par un humain.

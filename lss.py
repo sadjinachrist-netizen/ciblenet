@@ -1,18 +1,18 @@
 # lss.py — Import du jeu de données officiel « LSS 2026 — 01_Prospection » (153 prospects, 250 interactions)
-# Les données décrivent les prospects d'une PME de services ; on les mappe sur le vocabulaire Yas Business.
+# On mappe secteurs, villes et statuts sur le vocabulaire de la grille de scoring.
 import csv
 import os
 import sqlite3
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "lss")
 
-# secteur LSS -> secteur de la grille de scoring Yas
+# secteur LSS -> secteur de la grille de scoring
 SECTEURS = {"Finance": "Banque", "Technologie": "Informatique", "Distribution": "Commerce", "Services": "Conseil",
             "Immobilier": "Autres", "Logistique": "Logistique", "Commerce": "Commerce", "Agroalimentaire": "Agroalimentaire",
             "Santé": "Santé", "Industrie": "Industrie", "Éducation": "Éducation"}
-# ville LSS -> zone de couverture Fibre (Agoè-Nyivé fait partie du Grand Lomé)
+# ville LSS -> zone (Agoè-Nyivé fait partie du Grand Lomé)
 VILLES = {"Lomé": "Lomé", "Agoè-Nyivé": "Lomé", "Kara": "Kara", "Tsévié": "Tsevié", "Kpalimé": "Autres", "Atakpamé": "Autres"}
-# statut LSS -> statut du pipeline Yas
+# statut LSS -> statut du pipeline
 STATUTS = {"Nouveau": "Nouveau", "Contacté": "Contacté", "En discussion": "Contacté", "À relancer": "Relancé",
            "Converti": "Converti", "Refusé": "Non intéressé"}
 

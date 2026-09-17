@@ -1,5 +1,7 @@
-# scoring.py — Moteur de scoring ICP Yas Business
-# Python pur, aucune dépendance. Chaque point attribué est explicable.
+# scoring.py — Moteur de scoring ICP (profil client idéal) de la PME utilisatrice
+# Python pur, aucune dépendance. Chaque point attribué est explicable. Les secteurs et villes
+# prioritaires viennent du profil de l'entreprise (onglet Paramètres).
+import config
 
 SECTEURS = ["Banque", "Assurance", "Logistique", "Éducation", "Informatique", "Santé",
             "Commerce", "Industrie", "Agroalimentaire", "Conseil", "Autres"]
@@ -20,11 +22,12 @@ def tranche(effectif: int) -> str:
     return "250+"
 
 
-def score_prospect(company: dict):
+def score_prospect(company: dict, profil: dict | None = None):
     """
-    Calcule le score ICP d'une entreprise.
+    Calcule le score ICP d'une entreprise selon le profil de la PME.
     Retourne (score, reasons, status) — reasons est une liste de chaînes "+N raison".
     """
+    p = profil or config.profil()
     score, reasons = 0, []
     sector = company.get("secteur", "") or ""
     employees = int(company.get("effectif", 0) or 0)
@@ -32,11 +35,11 @@ def score_prospect(company: dict):
     signal = (company.get("signal_croissance", "") or "").strip()
 
     # Critère 1 - Secteur (30 pts max)
-    if sector in ("Banque", "Assurance"):
+    if sector in p["secteurs_30"]:
         pts, why = 30, f"Secteur prioritaire haute valeur ({sector})"
-    elif sector in ("Logistique", "Éducation", "Informatique", "Santé"):
+    elif sector in p["secteurs_25"]:
         pts, why = 25, f"Secteur prioritaire ({sector})"
-    elif sector in ("Commerce", "Industrie"):
+    elif sector in p["secteurs_15"]:
         pts, why = 15, f"Secteur secondaire ({sector})"
     else:
         pts, why = 5, f"Secteur hors cible ({sector or 'inconnu'})"
@@ -56,10 +59,10 @@ def score_prospect(company: dict):
     reasons.append(f"+{pts} {why}")
 
     # Critère 3 - Localisation (20 pts max)
-    if city == "Lomé":
-        pts, why = 20, "Lomé, couverture Fibre optimale"
-    elif city == "Kara":
-        pts, why = 15, "Kara, couverture Fibre partielle"
+    if city in p["villes_20"]:
+        pts, why = 20, f"Zone prioritaire ({city})"
+    elif city in p["villes_15"]:
+        pts, why = 15, f"Zone secondaire ({city})"
     else:
         pts, why = 5, f"Hors zone prioritaire ({city or 'inconnue'})"
     score += pts
@@ -88,17 +91,15 @@ LABELS = {
 }
 
 
-def offre_recommandee(company: dict) -> str:
-    """Choisit l'offre Yas Business à mettre en avant selon le profil."""
-    sector = company.get("secteur", "")
-    employees = int(company.get("effectif", 0) or 0)
-    if sector in ("Banque", "Assurance", "Commerce"):
-        return "Mixx Business (encaissement marchand, virements groupés)"
-    if sector == "Logistique" or employees >= 50:
-        return "Flotte mobile (forfaits SIM groupés pour vos équipes)"
-    if sector in ("Informatique", "Éducation", "Santé"):
-        return "Fibre Pro (internet très haut débit dédié)"
-    return "Fibre Pro + API SMS"
+def offre_recommandee(company: dict, profil: dict | None = None) -> str:
+    """Choisit l'offre de la PME à mettre en avant : celle citée dans le besoin/signal, sinon la première."""
+    p = profil or config.profil()
+    offres = p["offres"] or ["notre offre"]
+    texte = f"{company.get('signal_croissance', '')} {company.get('besoin', '')}".lower()
+    for o in offres:
+        if o.lower() in texte:
+            return o
+    return offres[0]
 
 
 if __name__ == "__main__":
@@ -106,7 +107,7 @@ if __name__ == "__main__":
     ok = True
     with open("data/entreprises.csv", encoding="utf-8-sig") as f:
         for row in csv.DictReader(f, delimiter=";"):
-            s, r, st = score_prospect(row)
+            s, r, st = score_prospect(row, config.PROFIL_DEFAUT)
             attendu = int(row.get("score_attendu") or -1)
             flag = "OK " if s == attendu else "!! "
             ok &= s == attendu

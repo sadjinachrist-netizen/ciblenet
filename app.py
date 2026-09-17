@@ -1,10 +1,11 @@
-# app.py — Yas Prospect Copilot : interface Streamlit (Recherche & Scoring · Pipeline · Handoff · Tableau de bord)
+# app.py — CibleNet : interface Streamlit (Recherche & Scoring · Pipeline · Handoff · Tableau de bord · Paramètres)
 import os
 import tempfile
 
 import pandas as pd
 import streamlit as st
 
+import config
 import database as db
 import llm
 import lss
@@ -12,7 +13,7 @@ import ui
 import webhook
 from scoring import SECTEURS, VILLES, TRANCHES, LABELS, score_prospect, offre_recommandee
 
-st.set_page_config(page_title="Yas Prospect Copilot", page_icon="🎯", layout="wide")
+st.set_page_config(page_title=config.APP_NOM, page_icon="🎯", layout="wide")
 
 # Streamlit Cloud : les secrets (GROQ_API_KEY, GROQ_API_KEY_2, DISCORD_WEBHOOK_URL) sont exposés comme variables d'environnement
 try:
@@ -27,8 +28,8 @@ ui.injecter_css()
 
 # ---------- barre latérale ----------
 with st.sidebar:
-    st.title("🎯 Yas Prospect Copilot")
-    st.caption("Identifier · Qualifier · Prospecter · Relancer · Convertir — pour Yas Business")
+    st.title(f"🎯 {config.APP_NOM}")
+    st.caption(f"{config.APP_SLOGAN} — profil actif : **{config.profil()['entreprise']}**")
     st.markdown(f"**LLM :** {llm.mode()}")
     st.markdown(f"**Handoff Discord :** {'✅ configuré' if webhook.configure() else '⚠️ non configuré (notification interne)'}")
     st.divider()
@@ -48,10 +49,10 @@ with st.sidebar:
             f.write(fichier.getbuffer())
         n = db.importer_csv(chemin)
         st.success(f"{n} entreprise(s) importée(s)")
-    chemin_backup = os.path.join(tempfile.gettempdir(), "backup_yas_prospects.csv")
+    chemin_backup = os.path.join(tempfile.gettempdir(), "backup_ciblenet.csv")
     db.exporter_csv(chemin_backup)
     with open(chemin_backup, "rb") as f:
-        st.download_button("💾 Backup CSV (Google Sheets / Excel)", f, "backup_yas_prospects.csv", "text/csv", use_container_width=True)
+        st.download_button("💾 Backup CSV (Google Sheets / Excel)", f, "backup_ciblenet.csv", "text/csv", use_container_width=True)
 
 
 def badge(statut: str) -> str:
@@ -91,13 +92,13 @@ ui.kpis([
 ])
 st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
 
-tab1, tab2, tab3, tab4 = st.tabs(["🔎 Recherche & Scoring", "🗂️ Pipeline", "🤝 Handoff", "📊 Tableau de bord"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["🔎 Recherche & Scoring", "🗂️ Pipeline", "🤝 Handoff", "📊 Tableau de bord", "⚙️ Paramètres"])
 
 # =====================================================================
 # Onglet 1 — Recherche & Scoring
 # =====================================================================
 with tab1:
-    st.subheader("Identifier des PME togolaises correspondant à l'ICP Yas Business")
+    st.subheader(f"Identifier les entreprises correspondant au profil client idéal de {config.profil()['entreprise']}")
     f1, f2, f3, f4 = st.columns([2, 2, 2, 1])
     secteur = f1.selectbox("Secteur d'activité", ["Tous"] + SECTEURS)
     ville = f2.selectbox("Localisation", ["Toutes"] + VILLES)
@@ -181,7 +182,7 @@ with tab2:
 # Onglet 3 — Handoff
 # =====================================================================
 with tab3:
-    st.subheader("Transmettre les prospects convertis au responsable commercial")
+    st.subheader(f"Transmettre les prospects convertis au responsable commercial de {config.profil()['entreprise']}")
     convertis = db.lister(statut="Converti")
     if not convertis:
         st.info("Aucun prospect converti pour l'instant. Convertissez-en un depuis l'onglet Pipeline.")
@@ -215,3 +216,38 @@ with tab4:
 20 min par entreprise, soit **{total * 20 // 60} h {total * 20 % 60:02d}**. Avec le copilote : scoring instantané, 1 min par message généré
 et validé, soit **≈ {total} min**.
 """)
+
+# =====================================================================
+# Onglet 5 — Paramètres : profil de l'entreprise (nom, offres, secteurs et zones prioritaires)
+# =====================================================================
+with tab5:
+    st.subheader("Profil de l'entreprise utilisatrice")
+    st.caption("Le scoring, les messages générés et le handoff s'adaptent à ces paramètres. Par défaut : l'entreprise témoin du jeu de données LSS 2026.")
+    prof = dict(config.profil())
+    c1, c2 = st.columns(2)
+    prof["entreprise"] = c1.text_input("Nom de l'entreprise", prof["entreprise"])
+    prof["signature"] = c2.text_input("Signature des messages", prof["signature"])
+    prof["activite"] = st.text_input("Activité (une phrase, utilisée dans les prompts)", prof["activite"])
+    liste = lambda txt: [x.strip() for x in txt.split(",") if x.strip()]
+    prof["offres"] = liste(st.text_input("Offres (séparées par des virgules)", ", ".join(prof["offres"])))
+    st.markdown("**Grille de scoring — secteurs**")
+    s1, s2, s3 = st.columns(3)
+    prof["secteurs_30"] = liste(s1.text_input("Haute valeur (30 pts)", ", ".join(prof["secteurs_30"])))
+    prof["secteurs_25"] = liste(s2.text_input("Prioritaires (25 pts)", ", ".join(prof["secteurs_25"])))
+    prof["secteurs_15"] = liste(s3.text_input("Secondaires (15 pts) — les autres : 5 pts", ", ".join(prof["secteurs_15"])))
+    st.markdown("**Grille de scoring — zones**")
+    z1, z2 = st.columns(2)
+    prof["villes_20"] = liste(z1.text_input("Zones prioritaires (20 pts)", ", ".join(prof["villes_20"])))
+    prof["villes_15"] = liste(z2.text_input("Zones secondaires (15 pts) — les autres : 5 pts", ", ".join(prof["villes_15"])))
+    b1, b2 = st.columns([1, 3])
+    if b1.button("💾 Enregistrer et rescorer", type="primary", use_container_width=True):
+        con = db.connexion(); config.enregistrer(con, prof); con.close()
+        config.rafraichir()
+        db.scorer_tous()
+        st.success("Profil enregistré — tous les prospects ont été rescorés.")
+        st.rerun()
+    if b2.button("↩ Revenir au profil par défaut (entreprise témoin LSS 2026)"):
+        con = db.connexion(); config.enregistrer(con, config.PROFIL_DEFAUT); con.close()
+        config.rafraichir()
+        db.scorer_tous()
+        st.rerun()

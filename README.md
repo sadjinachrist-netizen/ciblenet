@@ -1,10 +1,10 @@
-# Yas Prospect Copilot
+# CibleNet
 
-Copilote commercial pour **Yas Business** (Yas Togo / Mixx by Yas) : identifier, qualifier, prospecter, relancer et convertir
-les meilleures PME togolaises — dans un seul outil simple, gratuit et explicable.
+Copilote commercial pour PME : **identifier, qualifier, prospecter, relancer et convertir** les meilleurs prospects B2B,
+dans un seul outil simple, gratuit et explicable. L'entreprise utilisatrice configure son profil (nom, offres, secteurs et zones
+prioritaires) ; le scoring, les messages générés et le handoff s'y adaptent.
 
 Réalisé pour le Projet 1 « Identifier les bons prospects » — ACAN Campus, Lomé IA Summer School 2026.
-Conforme au *Cahier des charges final — Projet Yas Prospect Copilot* (Streamlit + SQLite + Groq + webhook Discord + backup).
 
 ## Lancer
 
@@ -15,7 +15,7 @@ streamlit run app.py
 
 ou double-clic sur `start.bat` (Windows, charge automatiquement le fichier `.env`).
 
-Variables optionnelles (copier `.env.example` en `.env`) :
+Variables optionnelles (copier `.env.example` en `.env`, ou les mettre dans les *Secrets* Streamlit Cloud) :
 
 | Variable | Rôle | Sans elle |
 |---|---|---|
@@ -25,33 +25,43 @@ Variables optionnelles (copier `.env.example` en `.env`) :
 ## Structure
 
 ```
-yas-prospect-copilot/
-├── app.py              # Interface Streamlit : Recherche & Scoring · Pipeline · Handoff · Tableau de bord
-├── scoring.py          # Moteur de scoring ICP Yas Business (Python pur) — `python scoring.py` vérifie le dataset
-├── llm.py              # Appel Groq (2 clés, repli template)
+ciblenet/
+├── app.py              # Interface Streamlit : Recherche & Scoring · Pipeline · Handoff · Tableau de bord · Paramètres
+├── config.py           # Nom de la plateforme + profil de l'entreprise (offres, grille de scoring), stocké en base
+├── scoring.py          # Moteur de scoring ICP (Python pur) — `python scoring.py` vérifie le dataset
+├── llm.py              # Appel Groq (2 clés, repli template), prompts paramétrés par le profil
 ├── database.py         # SQLite : entreprises, actions, statuts, relance J+3, export CSV
 ├── webhook.py          # Handoff Discord
+├── lss.py              # Import du jeu de données officiel LSS 2026
+├── ui.py               # Habillage (CSS, en-tête, indicateurs, cartes)
 ├── data/entreprises.csv   # Dataset de démonstration : 12 PME togolaises (noms fictifs)
+├── data/lss/              # Jeu officiel LSS 2026 — 01_Prospection
 ├── demo/demo_script.md    # Script de démo 5 min + réponses aux questions du jury
 ├── requirements.txt
 └── README.md
 ```
 
+## Profil de l'entreprise (onglet Paramètres)
+
+Par défaut, CibleNet est configuré pour **l'entreprise témoin du jeu de données LSS 2026** : une PME de solutions informatiques
+(offres : CRM, Développement web, Application mobile, Automatisation, Data/BI, Marketing digital). Toute PME peut saisir son nom,
+ses offres, ses secteurs prioritaires (30 / 25 / 15 points) et ses zones (20 / 15 points) ; les prospects sont rescorés aussitôt.
+
 ## Données officielles LSS 2026
 
 Le bouton **« Charger les données LSS 2026 »** (barre latérale) remplace le dataset de démo par le jeu fourni par les organisateurs
-(`data/lss/`, fichier `01_Prospection` : 150 prospects après dédoublonnage, 250 interactions). Mapping vers le vocabulaire Yas :
-Finance → Banque, Technologie → Informatique, Distribution → Commerce, Services → Conseil ; Agoè-Nyivé → Lomé (Grand Lomé),
-Kpalimé / Atakpamé → Autres ; En discussion → Contacté, À relancer → Relancé, Refusé → Non intéressé. Le « besoin potentiel »
-du fichier est utilisé comme signal d'intention (le fichier n'a pas de signal de croissance). Les interactions alimentent l'historique.
+(`data/lss/`, fichier `01_Prospection` : 150 prospects après dédoublonnage, 250 interactions). Mapping : Finance → Banque,
+Technologie → Informatique, Distribution → Commerce, Services → Conseil ; Agoè-Nyivé → Lomé, Kpalimé / Atakpamé → Autres ;
+En discussion → Contacté, À relancer → Relancé, Refusé → Non intéressé. Le « besoin potentiel » du fichier est utilisé comme
+signal d'intention. Les interactions alimentent l'historique.
 
 ## Scoring (100 points, chaque point expliqué)
 
-| Critère | Max | Barème |
+| Critère | Max | Barème (profil par défaut) |
 |---|---|---|
 | Secteur | 30 | Banque, Assurance : 30 · Logistique, Éducation, Informatique, Santé : 25 · Commerce, Industrie : 15 · autres : 5 |
 | Effectif | 25 | 50-250 : 25 · 10-49 : 20 · 251-500 : 15 · sinon : 5 |
-| Localisation | 20 | Lomé : 20 · Kara : 15 · autres : 5 |
+| Zone | 20 | Lomé : 20 · Kara : 15 · autres : 5 |
 | Signal de croissance | 25 | présent : 25 · absent : 0 |
 
 Seuils : **≥ 75** haute priorité (contact immédiat) · **≥ 60** priorité moyenne (template + variables) · **< 60** disqualifié (nurture).
@@ -61,13 +71,3 @@ Seuils : **≥ 75** haute priorité (contact immédiat) · **≥ 60** priorité 
 `Nouveau → Scoré → Contacté → Relancé → Converti`, avec sorties `Non intéressé` (archivé) et `À relancer plus tard` (nurture).
 Règle de relance : statut *Contacté* sans réponse depuis 3 jours → relance due (bouton « Simuler J+3 » pour la démo).
 Toutes les actions (messages, changements de statut, handoff) sont historisées dans la table `actions`.
-
-## Différences assumées avec le cahier des charges
-
-- Les **scores attendus** du dataset ont été recalculés avec `scoring.py` (8 valeurs du cahier étaient incohérentes avec le code).
-- Les **seuils** sont unifiés à 75 / 60 (le cahier mélangeait 50 et 60).
-- Le secteur **Santé** est ajouté (une clinique était classée en Éducation).
-- Les entreprises portent des **noms fictifs** : pas de faits inventés sur des sociétés réelles.
-- Le **backup Google Sheets** est remplacé par un export CSV téléchargeable (importable dans Google Sheets en un clic) :
-  même service pour le jury, sans compte de service Google à configurer.
-- Ajout d'un **historique des actions** et d'une **date de contact** réelle pour que la relance J+3 soit une règle et non une simulation.

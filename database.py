@@ -6,7 +6,7 @@ from datetime import date, datetime, timedelta
 
 from scoring import score_prospect
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "yas_prospects.db")
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ciblenet.db")
 CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "entreprises.csv")
 
 STATUTS = ["Nouveau", "Scoré", "Contacté", "Relancé", "Converti", "Non intéressé", "À relancer plus tard"]
@@ -46,10 +46,13 @@ def connexion() -> sqlite3.Connection:
 
 def init_db(reset: bool = False) -> int:
     """Crée les tables et charge le dataset CSV si la base est vide. Retourne le nombre d'entreprises."""
-    if reset and os.path.exists(DB_PATH):
-        os.remove(DB_PATH)
     con = connexion()
     con.executescript(SCHEMA)
+    if reset:
+        # on vide les données (le profil de l'entreprise, table parametres, est conservé)
+        con.execute("DELETE FROM actions")
+        con.execute("DELETE FROM entreprises")
+        con.commit()
     n = con.execute("SELECT COUNT(*) FROM entreprises").fetchone()[0]
     if n == 0:
         n = importer_csv(CSV_PATH, con)

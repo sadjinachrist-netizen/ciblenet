@@ -3,6 +3,8 @@ import os
 
 import httpx
 
+import config
+
 
 def configure() -> bool:
     return bool(os.environ.get("DISCORD_WEBHOOK_URL"))
@@ -10,7 +12,7 @@ def configure() -> bool:
 
 def message_handoff(e: dict) -> str:
     return (f"✅ **Prospect converti : {e['nom']}**\n"
-            f"Transmis au responsable commercial Yas Business\n"
+            f"Transmis au responsable commercial de {config.profil()['entreprise']}\n"
             f"Secteur : {e.get('secteur')} | Effectif : {e.get('effectif')} | Ville : {e.get('localisation')}\n"
             f"Score ICP : {e.get('score')}/100\n"
             f"Message généré : {(e.get('message_genere') or '—')[:900]}")
