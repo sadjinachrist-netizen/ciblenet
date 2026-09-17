@@ -30,3 +30,16 @@ def envoyer_handoff(e: dict) -> tuple[bool, str]:
         return True, texte
     except httpx.HTTPError:
         return False, texte
+
+
+def envoyer_handoff_texte(texte: str) -> tuple[bool, str]:
+    """Envoie un texte déjà composé (utilisé par notifier.py)."""
+    url = os.environ.get("DISCORD_WEBHOOK_URL")
+    if not url:
+        return False, texte
+    try:
+        r = httpx.post(url, json={"content": texte[:1900]}, timeout=10)
+        r.raise_for_status()
+        return True, texte
+    except httpx.HTTPError:
+        return False, texte

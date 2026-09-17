@@ -9,6 +9,7 @@ import config
 import database as db
 import llm
 import lss
+import notifier
 import ui
 import webhook
 from scoring import SECTEURS, VILLES, TRANCHES, LABELS, score_prospect, offre_recommandee
@@ -31,7 +32,8 @@ with st.sidebar:
     st.title(f"🎯 {config.APP_NOM}")
     st.caption(f"{config.APP_SLOGAN} — profil actif : **{config.profil()['entreprise']}**")
     st.markdown(f"**LLM :** {llm.mode()}")
-    st.markdown(f"**Handoff Discord :** {'✅ configuré' if webhook.configure() else '⚠️ non configuré (notification interne)'}")
+    actifs = notifier.canaux_actifs()
+    st.markdown("**Canaux de notification :** " + (" ".join(f"{notifier.CANAUX[c]['icone']} {notifier.CANAUX[c]['label']}" for c in actifs) if actifs else "⚠️ aucun configuré (notification interne)"))
     st.divider()
     if st.button("🔄 Réinitialiser la démo", use_container_width=True):
         db.init_db(reset=True)
@@ -174,6 +176,14 @@ with tab2:
         if dm and dm[0] == e["id"]:
             st.markdown(f"**Message généré** *(source : {'Groq Llama 3.3' if dm[2] == 'groq' else 'template local'})*")
             st.text_area("", dm[1], height=220, label_visibility="collapsed")
+            if notifier.configure("gmail"):
+                dest = e.get("email") or os.environ.get("GMAIL_RECIPIENT", "")
+                if st.button(f"📧 Envoyer ce message par email à {dest}", key=f"mail_{e['id']}"):
+                    ok, detail = notifier.envoyer_gmail(f"{config.profil()['entreprise']} — proposition pour {e['nom']}", dm[1], dest)
+                    db.journaliser(e["id"], "Email envoyé (Gmail)" if ok else "Échec email", detail)
+                    (st.success if ok else st.error)(detail)
+                    if ok and e["statut"] in ("Nouveau", "Scoré"):
+                        db.changer_statut(e["id"], "Contacté", "Email envoyé via Gmail"); st.rerun()
         elif e.get("message_genere"):
             st.markdown("**Dernier message généré**")
             st.text_area("", e["message_genere"], height=200, label_visibility="collapsed")
@@ -188,15 +198,26 @@ with tab3:
         st.info("Aucun prospect converti pour l'instant. Convertissez-en un depuis l'onglet Pipeline.")
     for e in convertis:
         with st.container(border=True):
-            c1, c2 = st.columns([3, 1])
-            c1.markdown(f"**{e['nom']}** — {e['secteur']} · {e['effectif']} salariés · {e['localisation']} · score **{e['score']}/100**")
-            if c2.button("🤝 Transmettre", key=f"h{e['id']}", type="primary", use_container_width=True):
-                ok, texte = webhook.envoyer_handoff(e)
-                db.enregistrer_message(e["id"], texte, "Handoff " + ("Discord" if ok else "interne"))
-                if ok:
-                    st.success("Notification envoyée sur Discord ✅")
-                else:
-                    st.warning("Webhook non configuré ou injoignable — notification interne affichée ci-dessous.")
+            st.markdown(f"**{e['nom']}** — {e['secteur']} · {e['effectif']} salariés · {e['localisation']} · score **{e['score']}/100**")
+            texte = webhook.message_handoff(e)
+            sujet = f"Prospect converti : {e['nom']}"
+            cols = st.columns(5)
+            boutons = [("discord", "🟣 Discord"), ("gmail", "📧 Gmail"), ("whatsapp", "💬 WhatsApp"), ("sms", "📱 SMS")]
+            for col, (canal, label) in zip(cols, boutons):
+                if col.button(label, key=f"{canal}_{e['id']}", use_container_width=True, disabled=not notifier.configure(canal),
+                              help=None if notifier.configure(canal) else "Canal non configuré (voir .env / Secrets)"):
+                    ok, detail = notifier.envoyer(canal, sujet, texte)
+                    db.journaliser(e["id"], f"Handoff {notifier.CANAUX[canal]['label']}" + ("" if ok else " (échec)"), detail)
+                    (st.success if ok else st.error)(detail)
+            if cols[4].button("📣 Tous les canaux", key=f"tous_{e['id']}", type="primary", use_container_width=True):
+                res = notifier.envoyer_tous(sujet, texte)
+                if not res:
+                    db.journaliser(e["id"], "Handoff interne", texte)
+                    st.warning("Aucun canal configuré — notification interne affichée ci-dessous.")
+                for canal, (ok, detail) in res.items():
+                    db.journaliser(e["id"], f"Handoff {notifier.CANAUX[canal]['label']}" + ("" if ok else " (échec)"), detail)
+                    (st.success if ok else st.error)(f"{notifier.CANAUX[canal]['icone']} {detail}")
+            with st.expander("Voir la fiche de transmission"):
                 st.code(texte)
 
 # =====================================================================

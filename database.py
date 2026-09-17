@@ -48,6 +48,8 @@ def init_db(reset: bool = False) -> int:
     """Crée les tables et charge le dataset CSV si la base est vide. Retourne le nombre d'entreprises."""
     con = connexion()
     con.executescript(SCHEMA)
+    if "email" not in [r[1] for r in con.execute("PRAGMA table_info(entreprises)")]:
+        con.execute("ALTER TABLE entreprises ADD COLUMN email TEXT")   # ajout après coup : migration douce
     if reset:
         # on vide les données (le profil de l'entreprise, table parametres, est conservé)
         con.execute("DELETE FROM actions")
@@ -74,9 +76,10 @@ def importer_csv(chemin, con=None) -> int:
             continue
         try:
             con.execute(
-                "INSERT INTO entreprises (nom, secteur, localisation, effectif, signal_croissance, site_web, paiement_en_ligne) VALUES (?,?,?,?,?,?,?)",
+                "INSERT INTO entreprises (nom, secteur, localisation, effectif, signal_croissance, site_web, paiement_en_ligne, email) VALUES (?,?,?,?,?,?,?,?)",
                 (row["nom"], row.get("secteur"), row.get("localisation") or row.get("ville"), int(row.get("effectif") or 0),
-                 row.get("signal_croissance") or "", int(row.get("site_web") in ("1", "oui", "true")), int(row.get("paiement_en_ligne") in ("1", "oui", "true"))),
+                 row.get("signal_croissance") or "", int(row.get("site_web") in ("1", "oui", "true")), int(row.get("paiement_en_ligne") in ("1", "oui", "true")),
+                 row.get("email") or row.get("email_contact") or None),
             )
             n += 1
         except sqlite3.IntegrityError:
@@ -187,3 +190,12 @@ def exporter_csv(chemin: str) -> str:
         w.writeheader()
         w.writerows(rows)
     return chemin
+
+
+def journaliser(eid: int, type_action: str, detail: str) -> None:
+    """Trace une action (envoi Gmail, WhatsApp, SMS, Discord…) dans l'historique du prospect."""
+    con = connexion()
+    con.execute("INSERT INTO actions (entreprise_id, type, detail, date) VALUES (?,?,?,?)",
+                (eid, type_action, detail, datetime.now().isoformat(timespec="minutes")))
+    con.commit()
+    con.close()

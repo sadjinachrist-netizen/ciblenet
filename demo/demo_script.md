@@ -5,6 +5,8 @@
 - [ ] Barre latérale : **LLM : Groq (Llama 3.3)** et **Handoff Discord : configuré** (sinon la démo marche quand même en mode template / notification interne — le dire)
 - [ ] Bouton **Réinitialiser la démo** cliqué → 12 entreprises, aucune scorée
 - [ ] Discord ouvert sur un second écran, sur le salon du webhook
+- [ ] WhatsApp : le téléphone destinataire a rejoint le sandbox Twilio dans les dernières 72 h (« join … »)
+- [ ] Gmail : boîte du destinataire ouverte sur un onglet
 - [ ] Vidéo de secours accessible en un clic
 - [ ] Recherche testée une fois : Logistique + Lomé + 10-49 → Togo Logistique SA
 
@@ -39,9 +41,9 @@ construit en 4 jours, zéro budget, et chaque décision de l'IA est expliquée p
 1. **⏩ Simuler J+3** : la cloche 🔔 apparaît, « relance due : aucune réponse depuis 3 jours ».
 2. **🔁 Relancer** : relance courte, ton différent, la carte passe en Relancé.
 3. **✅ Converti**.
-4. Onglet **Handoff** → **🤝 Transmettre** : la notification apparaît **en direct sur Discord**
-   (« Transmis au responsable commercial de … », secteur, effectif, score, message).
-   Si Discord ne répond pas : la même notification s'affiche dans l'appli.
+4. Onglet **Handoff** → **📣 Tous les canaux** : la notification arrive **en direct sur Discord, dans la boîte Gmail et sur WhatsApp**
+   (« Transmis au responsable commercial de … », secteur, effectif, score, message). Montrer le téléphone.
+   Si un canal ne répond pas : l'appli l'indique, les autres passent, et la fiche reste consultable dans l'appli.
 
 ## Clôture (30 s) — onglet Tableau de bord
 « 12 prospects : 4 heures de recherche manuelle, 15 minutes avec le copilote. Le backup CSV est téléchargeable

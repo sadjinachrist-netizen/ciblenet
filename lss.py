@@ -39,9 +39,9 @@ def importer(con: sqlite3.Connection) -> dict:
         signal = f"Besoin exprimé : {r['besoin_potentiel']}" if r["besoin_potentiel"] else ""
         statut = STATUTS.get(r["statut"], "Nouveau")
         cur = con.execute(
-            "INSERT INTO entreprises (nom, secteur, localisation, effectif, signal_croissance, site_web, paiement_en_ligne, statut, date_contact) VALUES (?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO entreprises (nom, secteur, localisation, effectif, signal_croissance, site_web, paiement_en_ligne, statut, date_contact, email) VALUES (?,?,?,?,?,?,?,?,?,?)",
             (r["entreprise"], SECTEURS.get(r["secteur"], "Autres"), VILLES.get(r["ville"], "Autres"), int(r["taille_effectif"] or 0),
-             signal, int(bool(r["email"])), 0, statut, r["date_dernier_contact"] or None))
+             signal, int(bool(r["email"])), 0, statut, r["date_dernier_contact"] or None, r["email"] or None))
         ids[r["prospect_id"]] = cur.lastrowid
     n_act = 0
     for r in _lire("01_Prospection_interactions.csv"):
